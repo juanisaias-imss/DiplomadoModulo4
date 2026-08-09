@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 
@@ -17,70 +16,77 @@ from sklearn.metrics import (
 # ENCABEZADO
 # --------------------------------------------------
 
-st.write(
-    """
-    # Modelo de Predicción de la situación jurídica de menores 
-    """
-)
+st.title("Modelo de Predicción de la Situación Jurídica de Menores")
 
 st.image(
     "children-playing-group.jpg",
-    caption="Clasificando la situación jurídica del niño mediante un modelo de aprendizaje supervisado"
+    caption="Clasificación de la situación jurídica mediante aprendizaje supervisado"
 )
 
 # --------------------------------------------------
-# CARGA DE DATOS PARA CATÁLOGOS
+# CARGA DE DATOS
 # --------------------------------------------------
 
-datos = pd.read_csv("datos_dif2.csv", encoding="latin-1")
+datos = pd.read_csv(
+    "datos_dif2.csv",
+    encoding="latin-1"
+)
 
 # --------------------------------------------------
-# TÍTULO
+# TÍTULO PRINCIPAL
 # --------------------------------------------------
 
-st.write(
+st.header(
     "Predicción del estatus jurídico de niñas, niños y adolescentes"
 )
 
 # --------------------------------------------------
-# CAPTURA DE DATOS
+# CAPTURA DE DATOS MEDIANTE FORMULARIO
 # --------------------------------------------------
 
 def user_input_features():
 
-    Area = st.selectbox(
-        "Área",
-        sorted(datos["Area"].dropna().unique())
-    )
+    st.sidebar.header("Captura de Información")
 
-    edad_meses = st.number_input(
-        "Edad (meses)",
-        min_value=float(datos["edad_meses"].min()),
-        max_value=float(datos["edad_meses"].max()),
-        value=float(datos["edad_meses"].median())
-    )
+    with st.sidebar.form("formulario_prediccion"):
 
-    antiguedad_caso = st.number_input(
-        "Antigüedad del caso",
-        min_value=float(datos["antiguedad del caso"].min()),
-        max_value=float(datos["antiguedad del caso"].max()),
-        value=float(datos["antiguedad del caso"].median())
-    )
+        Area = st.selectbox(
+            "Área",
+            sorted(datos["Area"].dropna().unique())
+        )
 
-    MUNICPIO_C_I = st.selectbox(
-        "Municipio",
-        sorted(datos["MUNICPIO_C_I"].dropna().unique())
-    )
+        MUNICPIO_C_I = st.selectbox(
+            "Municipio",
+            sorted(datos["MUNICPIO_C_I"].dropna().unique())
+        )
 
-    GENERO = st.selectbox(
-        "Género",
-        sorted(datos["GENERO"].dropna().unique())
-    )
+        GENERO = st.radio(
+            "Género",
+            sorted(datos["GENERO"].dropna().unique())
+        )
 
-    Abogado = st.selectbox(
-        "Abogado",
-        sorted(datos["Abogado"].dropna().unique())
-    )
+        edad_meses = st.slider(
+            "Edad (meses)",
+            min_value=int(datos["edad_meses"].min()),
+            max_value=int(datos["edad_meses"].max()),
+            value=int(datos["edad_meses"].median())
+        )
+
+        antiguedad_caso = st.slider(
+            "Antigüedad del caso",
+            min_value=int(datos["antiguedad del caso"].min()),
+            max_value=int(datos["antiguedad del caso"].max()),
+            value=int(datos["antiguedad del caso"].median())
+        )
+
+        Abogado = st.selectbox(
+            "Abogado asignado",
+            sorted(datos["Abogado"].dropna().unique())
+        )
+
+        submitted = st.form_submit_button(
+            "Generar Predicción"
+        )
 
     data = {
         "Area": Area,
@@ -91,14 +97,18 @@ def user_input_features():
         "Abogado": Abogado
     }
 
-    return pd.DataFrame(data, index=[0])
+    return pd.DataFrame(data, index=[0]), submitted
 
 
-df = user_input_features()
+df, submitted = user_input_features()
 
-st.subheader("Datos capturados")
+# --------------------------------------------------
+# MOSTRAR DATOS CAPTURADOS
+# --------------------------------------------------
 
-st.write(df)
+st.subheader("Datos Capturados")
+
+st.dataframe(df)
 
 # --------------------------------------------------
 # DATOS DE ENTRENAMIENTO
@@ -135,7 +145,7 @@ le_target = LabelEncoder()
 y_encoded = le_target.fit_transform(y)
 
 # --------------------------------------------------
-# ONE HOT ENCODING
+# CODIFICACIÓN DE VARIABLES CATEGÓRICAS
 # --------------------------------------------------
 
 X_encoded = pd.get_dummies(X)
@@ -174,22 +184,90 @@ modelo = RandomForestClassifier(
 # ENTRENAMIENTO
 # --------------------------------------------------
 
-modelo.fit(X_train, y_train)
+modelo.fit(
+    X_train,
+    y_train
+)
+
+# --------------------------------------------------
+# EVALUACIÓN DEL MODELO
+# --------------------------------------------------
+
+y_pred = modelo.predict(X_test)
+
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(
+    y_test,
+    y_pred,
+    average="weighted"
+)
+recall = recall_score(
+    y_test,
+    y_pred,
+    average="weighted"
+)
+f1 = f1_score(
+    y_test,
+    y_pred,
+    average="weighted"
+)
+
+st.sidebar.subheader("Desempeño del Modelo")
+
+st.sidebar.write(
+    f"Exactitud: {accuracy:.2%}"
+)
+
+st.sidebar.write(
+    f"Precisión: {precision:.2%}"
+)
+
+st.sidebar.write(
+    f"Recall: {recall:.2%}"
+)
+
+st.sidebar.write(
+    f"F1 Score: {f1:.2%}"
+)
 
 # --------------------------------------------------
 # PREDICCIÓN
 # --------------------------------------------------
 
-prediction = modelo.predict(
-    df_encoded
-)
+if submitted:
 
-estatus_predicho = le_target.inverse_transform(
-    prediction
-)
+    prediction = modelo.predict(
+        df_encoded
+    )
 
-st.subheader("Predicción")
+    estatus_predicho = le_target.inverse_transform(
+        prediction
+    )
 
-st.success(
-    f"Estatus predicho: {estatus_predicho[0]}"
-)
+    st.subheader("Resultado de la Predicción")
+
+    st.success(
+        f"✅ Estatus predicho: {estatus_predicho[0]}"
+    )
+
+    probabilidades = modelo.predict_proba(
+        df_encoded
+    )[0]
+
+    clases = le_target.classes_
+
+    prob_df = pd.DataFrame({
+        "Estatus": clases,
+        "Probabilidad": probabilidades
+    })
+
+    st.subheader(
+        "Probabilidades por estatus"
+    )
+
+    st.dataframe(
+        prob_df.sort_values(
+            by="Probabilidad",
+            ascending=False
+        )
+    )

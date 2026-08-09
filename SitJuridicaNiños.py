@@ -107,7 +107,7 @@ st.write(df)
 # --------------------------------------------------
 
 datos_entrenamiento = pd.read_csv(
-    "datos_dif2.csv.csv",
+    "datos_dif2.csv",
     encoding="latin-1"
 )
 

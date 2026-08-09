@@ -179,6 +179,24 @@ modelo = RandomForestClassifier(
 modelo.fit(X_train, y_train)
 
 # --------------------------------------------------
+# PREDICCIÓN
+# --------------------------------------------------
+
+prediction = modelo.predict(
+    df_encoded
+)
+
+estatus_predicho = le_target.inverse_transform(
+    prediction
+)
+
+st.subheader("Predicción")
+
+st.success(
+    f"Estatus predicho: {estatus_predicho[0]}"
+)
+'''
+# --------------------------------------------------
 # EVALUACIÓN
 # --------------------------------------------------
 
@@ -327,4 +345,4 @@ st.subheader(
 
 st.dataframe(
     importancias.head(15)
-)
+)'''

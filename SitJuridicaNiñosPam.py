@@ -329,7 +329,7 @@ if submitted:
         f"✅ Estatus predicho: {estatus_predicho[0]}"
     )
 
-    probabilidades = modelo.predict_proba(
+    probabilidades = best_modelo.predict_proba(
         df_encoded
     )[0]
 

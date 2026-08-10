@@ -3,13 +3,13 @@ import pandas as pd
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
     recall_score,
-    f1_score,
-    classification_report
+    f1_score
 )
 
 # --------------------------------------------------
@@ -41,7 +41,7 @@ st.header(
 )
 
 # --------------------------------------------------
-# CAPTURA DE DATOS MEDIANTE FORMULARIO
+# FORMULARIO DE CAPTURA
 # --------------------------------------------------
 
 def user_input_features():
@@ -80,7 +80,7 @@ def user_input_features():
         )
 
         Abogado = st.selectbox(
-            "Abogado asignado",
+            "Abogado",
             sorted(datos["Abogado"].dropna().unique())
         )
 
@@ -107,7 +107,6 @@ df, submitted = user_input_features()
 # --------------------------------------------------
 
 st.subheader("Datos Capturados")
-
 st.dataframe(df)
 
 # --------------------------------------------------
@@ -137,7 +136,7 @@ X = datos_entrenamiento[
 y = datos_entrenamiento["Estatus"]
 
 # --------------------------------------------------
-# CODIFICACIÓN DE VARIABLE OBJETIVO
+# CODIFICACIÓN VARIABLE OBJETIVO
 # --------------------------------------------------
 
 le_target = LabelEncoder()
@@ -145,7 +144,7 @@ le_target = LabelEncoder()
 y_encoded = le_target.fit_transform(y)
 
 # --------------------------------------------------
-# CODIFICACIÓN DE VARIABLES CATEGÓRICAS
+# ONE HOT ENCODING
 # --------------------------------------------------
 
 X_encoded = pd.get_dummies(X)
@@ -170,6 +169,29 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # --------------------------------------------------
+# ESCALAMIENTO DE VARIABLES NUMÉRICAS
+# --------------------------------------------------
+
+variables_numericas = [
+    "edad_meses",
+    "antiguedad del caso"
+]
+
+scaler = StandardScaler()
+
+X_train.loc[:, variables_numericas] = scaler.fit_transform(
+    X_train[variables_numericas]
+)
+
+X_test.loc[:, variables_numericas] = scaler.transform(
+    X_test[variables_numericas]
+)
+
+df_encoded.loc[:, variables_numericas] = scaler.transform(
+    df_encoded[variables_numericas]
+)
+
+# --------------------------------------------------
 # MODELO RANDOM FOREST
 # --------------------------------------------------
 
@@ -190,27 +212,37 @@ modelo.fit(
 )
 
 # --------------------------------------------------
-# EVALUACIÓN DEL MODELO
+# EVALUACIÓN
 # --------------------------------------------------
 
 y_pred = modelo.predict(X_test)
 
-accuracy = accuracy_score(y_test, y_pred)
+accuracy = accuracy_score(
+    y_test,
+    y_pred
+)
+
 precision = precision_score(
     y_test,
     y_pred,
     average="weighted"
 )
+
 recall = recall_score(
     y_test,
     y_pred,
     average="weighted"
 )
+
 f1 = f1_score(
     y_test,
     y_pred,
     average="weighted"
 )
+
+# --------------------------------------------------
+# MÉTRICAS DEL MODELO
+# --------------------------------------------------
 
 st.sidebar.subheader("Desempeño del Modelo")
 
@@ -244,7 +276,9 @@ if submitted:
         prediction
     )
 
-    st.subheader("Resultado de la Predicción")
+    st.subheader(
+        "Resultado de la Predicción"
+    )
 
     st.success(
         f"✅ Estatus predicho: {estatus_predicho[0]}"
@@ -262,12 +296,12 @@ if submitted:
     })
 
     st.subheader(
-        "Probabilidades por estatus"
+        "Probabilidades por Estatus"
     )
 
     st.dataframe(
         prob_df.sort_values(
             by="Probabilidad",
             ascending=False
-        )
+        ).reset_index(drop=True)
     )

@@ -177,17 +177,34 @@ variables_numericas = [
     "antiguedad del caso"
 ]
 
+# Convertir a float antes del escalamiento
+X_train[variables_numericas] = (
+    X_train[variables_numericas].astype(float)
+)
+
+X_test[variables_numericas] = (
+    X_test[variables_numericas].astype(float)
+)
+
+df_encoded[variables_numericas] = (
+    df_encoded[variables_numericas].astype(float)
+)
+
+# Crear escalador
 scaler = StandardScaler()
 
-X_train.loc[:, variables_numericas] = scaler.fit_transform(
+# Ajustar con entrenamiento
+X_train[variables_numericas] = scaler.fit_transform(
     X_train[variables_numericas]
 )
 
-X_test.loc[:, variables_numericas] = scaler.transform(
+# Transformar prueba
+X_test[variables_numericas] = scaler.transform(
     X_test[variables_numericas]
 )
 
-df_encoded.loc[:, variables_numericas] = scaler.transform(
+# Transformar datos capturados por el usuario
+df_encoded[variables_numericas] = scaler.transform(
     df_encoded[variables_numericas]
 )
 

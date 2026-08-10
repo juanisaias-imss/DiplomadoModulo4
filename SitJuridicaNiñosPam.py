@@ -212,27 +212,55 @@ df_encoded[variables_numericas] = scaler.transform(
 # MODELO RANDOM FOREST
 # --------------------------------------------------
 
-modelo = RandomForestClassifier(
-    n_estimators=300,
-    max_depth=12,
-    min_samples_leaf=3,
-    random_state=42
+#modelo = RandomForestClassifier(
+#    n_estimators=300,
+#    max_depth=12,
+#    min_samples_leaf=3,
+#    random_state=42
+#)
+#Construcción y entrenamioento del modelo
+
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import accuracy_score, classification_report
+
+# Crear modelo base
+modelo = DecisionTreeClassifier(random_state=42)
+
+# Búsqueda de hiperparámetros
+param_grid = {
+    'max_depth': [3, 5, 10, 20, None],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 5]
+}
+grid = GridSearchCV(
+    modelo,
+    param_grid,
+    cv=5,
+    scoring='accuracy',
+    n_jobs=-1
 )
+
+grid.fit(X_train, y_train)
+
+# Mejor modelo
+best_modelo = grid.best_estimator_
 
 # --------------------------------------------------
 # ENTRENAMIENTO
 # --------------------------------------------------
 
-modelo.fit(
-    X_train,
-    y_train
-)
+#modelo.fit(
+#    X_train,
+#    y_train
+#)
 
 # --------------------------------------------------
 # EVALUACIÓN
 # --------------------------------------------------
 
-y_pred = modelo.predict(X_test)
+y_pred = best_modelo.predict(X_test)
 
 accuracy = accuracy_score(
     y_test,
@@ -285,7 +313,7 @@ st.sidebar.write(
 
 if submitted:
 
-    prediction = modelo.predict(
+    prediction = best_modelo.predict(
         df_encoded
     )
 

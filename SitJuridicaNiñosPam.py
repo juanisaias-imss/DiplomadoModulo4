@@ -213,9 +213,10 @@ df_encoded[variables_numericas] = scaler.transform(
 # --------------------------------------------------
 modelo = RandomForestClassifier(
 
-    n_estimators=100,
-    max_depth=50,
-    min_samples_leaf=3,
+    n_estimators=500,
+    max_depth=20,
+    min_samples_split=5,
+    min_samples_leaf=2,
     random_state=42
 )
 
